@@ -1,0 +1,62 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library("devtools")
+library("dplyr")
+library("ggpubr")
+library("outliers")
+library(ggplot2)
+```
+
+
+```{r}
+max_mean = read.csv("GCaMP electroporation survival - max mean.csv")
+average_mean = read.csv("GCaMP electroporation survival - average mean.csv")
+
+ggdensity(max_mean$post)
+ggdensity(max_mean$pre)
+ggdensity(average_mean$post)
+ggdensity(average_mean$pre)
+
+ggqqplot(max_mean$post)
+#One point far outside normal distribution
+ggqqplot(max_mean$pre)
+#Three points outside normal distribution
+ggqqplot(average_mean$post)
+ggqqplot(average_mean$pre)
+#All other sample set are within normal distribution
+
+shapiro.test(max_mean$post)
+#Significant test result therefore not normal. Test for outlier
+shapiro.test(max_mean$pre)
+shapiro.test(average_mean$post)
+shapiro.test(average_mean$pre)
+#All other variables are normally distributed since p>=0.05 and we therefore do not reject the null hypothesis that the distribution of our data is not significantly different from normal distribution
+
+boxplot(max_mean$post)
+
+grubbs.test(max_mean$post)
+#p-value <0.05 we accept the alternative that the lowest value(9747.771) is an outlier
+
+#Remove outlier in max_mean
+max_mean_cleaned = max_mean[max_mean$post!= 9747.771,]
+
+#Calculate variance
+var.test(max_mean_cleaned$post, max_mean_cleaned$pre)
+#Variances are significantly different
+var.test(average_mean$post, average_mean$pre)
+#Variances are not significantly different
+
+t.test(max_mean_cleaned$post, max_mean_cleaned$pre, alternative = "less", paired = TRUE, conf.level = 0.95, var.equal = FALSE)
+t.test(average_mean$post, average_mean$pre, alternative ="less", paired = TRUE, conf.level = 0.95, var.equal = FALSE)
+#Neither of the average or the max intensity projected image data pre and post electroporation are significantly different. We will test their similarity.
+
+full_data = read.csv("GCaMP electroporation survival.csv")
+
+ggpaired(average_mean, cond1 = "pre", cond2 = "post", 
+      line.color = "gray", line.size = 0.4, color = "condition")
+```
+
